@@ -49,7 +49,6 @@ const admin = require("firebase-admin");
  * Committee role is kept seperate so has to be accessed directly
  * Meeting category refers to the Category of channels where meetings will be stored
  * Log channel is the channel where all of this bot logs are sent
- * Welcome channel is the channel where it is announced when a new user joins
  * Log book is the current logs stored in the session, these are not stored in the database
  * The email transporter is the variable which stores the open SMTP channel for sending emails
  */
@@ -119,29 +118,10 @@ var configured = false;
 bot.on('ready', () => {
     log("Attempting to run bot!");
     configure().then(function(){
-        log("==================================");
-        log("==================================");
-        log("=============RESTART==============");
-        log("==================================");
-        log("==================================");
         // year_up();
         log("Bot running!");
-        log("Due to bot being offline, will now verify all 'unverified' users to ensure complete authentication access");
-        log("It will also then notify any users who are no longer verified, and tell them to verify their account");
-        log("Commands:");
         print_commands();
-        setTimeout(function(){notify_unverified_users()}, 2000);
     }).catch(log);
-});
-
-/*
- * Check for command '!notify_unverified' which notifies all unverified users by sending them their custom auth url
- * Should be done every time the Discord Bot is reloaded to deal with any users who joined while the bot was offline
- */
-bot.on('message', message => {
-    if(message.content === '!notify_unverified' && message.member != null && message.member.hasPermission("ADMINISTRATOR")){
-        notify_unverified_users();
-    }
 });
 
 
@@ -173,7 +153,7 @@ bot.on('message', message => {
             var member = message.member;
             member.send("=====================COMMANDS====================");
             member.send("!help (Shows commands)");
-            member.send("!meeting [<user>] (Creates a meeting of users, gives a voice and text chat)");
+            member.send("!room [<user>] (Creates a meeting of users, gives a voice and text chat)");
             member.send("=================================================");
         }
         message.delete();
@@ -188,7 +168,7 @@ bot.on('message', message => {
         log_channel.send("-----BEGIN LOGBOOK-----");
         log_channel.send("LOGS:" + logbook.length);
         logbook.forEach((log) => log_channel.send("`"+log+"`"));
-        log_channel.send("-----END   LOGBOOK-----");
+        log_channel.send("-----END LOGBOOK-----");
     }
 });
 
@@ -235,14 +215,11 @@ bot.on('message', message => {
     }
 });
 /*
-* When a member is added, log them joining and send them their custom auth url
-*/
+ * When a member is added, log them joining and send them their custom auth url
+ */
 bot.on('guildMemberAdd', member => {
     member.send("Welcome to the DoCSoc Discord Server!");
     log("New Member Joined:" + member.displayName);
-    if(configured){
-        welcome_channel.send("Hello <@" + member.id + ">! I've sent you a link to verify your status as a DoCSoc Member!\nPlease check your DMs!");
-    }
     send_user_auth_url(member);
 });
 
@@ -289,8 +266,8 @@ bot.on('voiceStateUpdate', function(oldState, newState){
 * At the moment, meeting rooms must expire before you can make another one
 */
  bot.on('message', async function(message){
-     //Check the command begins with !meeting and is done by a verified member, and configuration is complete
-    if(message.content.startsWith('!meeting') && message.member != null && message.member.roles.cache.find( r=> r.id === server.roles.Verified ) && configured){
+     //Check the command begins with !room and is done by a verified member, and configuration is complete
+    if(message.content.startsWith('!room') && message.member != null && message.member.roles.cache.find( r=> r.id === server.roles.Verified ) && configured){
        //Check if user has active room
        var has_room = false;
        for(var room_name in meeting_rooms){
@@ -433,7 +410,7 @@ function on_queue(snapshot, prevChildKey){
     db_user = snapshot.val();
     var member = get_member(db_user.id);
     if(member == null){
-        log("User not found through login with shortcode:" + db_user.name + ". Discord ID attempted:" + db_user.id);
+        log("User not found through login with shortcode:" + db_user.shortcode + ". Discord ID attempted:" + db_user.id);
         queue_ref.child(snapshot.key).remove();
     }else{
         var shortcode = db_user.shortcode;
@@ -453,28 +430,27 @@ function on_queue(snapshot, prevChildKey){
                         //Reset member roles
                         await member.roles.set([]);
                     }
-                    member.setNickname(db_user.name).catch((error)=>log("Can't set the nickname:" + db_user.name + " for this user(id):" + member.id + "->" + error));
                     member.roles.add(course_roles["Verified"])
                     if(Object.keys(server.roles).includes(course)){
                         member.roles.add(course_roles[course]);
                     }else{
-                        log("Unidentified course :" + course + " when trying to add member" + db_user.name);
+                        log("Unidentified course :" + course + " when trying to add member" + shortcode);
                     }
 
                     if(Object.keys(server.years).includes(year)){
                         member.roles.add(year_roles[year]);
                     }else{
-                        log("Unidentified year :" + year + " when trying to add member" + db_user.name);
+                        log("Unidentified year :" + year + " when trying to add member" + db_user.shortcode);
                     }
 
-                    log("DoCSoc Member : "+ db_user.name +" signed up successfully with username: " + member.user.username + " and id: " + member.user.id +" and course group: "+course+" and year: "+ year +"!");
+                    log("Member: signed up successfully with username: " + member.user.username + " and id: " + member.user.id +" and course group: "+course+" and year: "+ year +"!");
                     var userid = member.toJSON().userID.toString();
-                    verified_users.child(shortcode).set({"username": member.user.username, "name": db_user.name, "disc_id" : userid, "email": db_user.email, "course": course, "year": year});
+                    verified_users.child(shortcode).set({"username": member.user.username,"disc_id" : userid, "course": course, "year": year});
                     member.send("Well done! You've been verified as a member!");
                     member.send("You are now free to explore the server and join in with DoCSoc Events!");
                     member.send("Use the '!help' command in any channel to get a list of available commands");
                 }else{
-                    log("DocSoc Member: " + db_user.name + " signed in successfully. \n However this shortcode is already associated with discord id: "+ fetched_snapshot.val().disc_id + "\n so can't be associated with discord id: " + snapshot.val().id);
+                    log("Member: signed in successfully. \n However this shortcode is already associated with discord id: "+ fetched_snapshot.val().disc_id + "\n so can't be associated with discord id: " + snapshot.val().id);
                     member.send("This shortcode is already registered to a Discord User!");
                     member.send('If you believe this is an error, please contact an Admin');
                 }
@@ -541,13 +517,12 @@ function print_server_config(){
 function print_commands(){
     log("-----------COMMANDS-------------");
     log("!help (Shows commands)");
-    log("!notify_unverified (Sends URL's to all unverified users)");
     log("!kick [<user>] (Kicks mentioned users)")
     log("!logs (View all logs!)")
     log("!clear_log_chat (Clear the log chat from this runtimes logs)")
     log("!config (Prints the Server config)");
     log("!committee <user> (Gives a single user committee role, user @ to mention them as the argument!)");
-    log("!meeting [<user>] (Creates a meeting of users, gives a voice and text chat)");
+    log("!room [<user>] (Creates a meeting of users, gives a voice and text chat)");
 }
 
 /*
@@ -582,37 +557,14 @@ async function sync_meetings(){
     }
 }
 
-/*
- * This function iterates through all unverified users and sends them their custom
- * authentication URL
- */
-function notify_unverified_users(){
-    var notifications = 0;
-    if(configured){
-        log("Beginning: Notifiying Unverified Users");
-        guild.members.cache.forEach(guildMember => {
-            if(!guildMember.roles.cache.find( role => role.id === server.roles.Verified)){
-                send_user_auth_url(guildMember);
-                notifications++;
-            }
-        });
-        log(notifications + " users notified!");
-        log("Ending: Notifiying Unverified Users");
-    }else{
-        log("Can't clear backlog, configuration not set!");
-    }
-}
-
 
 /*
  * Given a member object, sends the member their custom auth url
  */
 function send_user_auth_url(member){
-    member.send("Just one last step to get into the IC DoCSoc server :)")
-    member.send("To complete your sign-up and verify your Discord Account, please login using your Imperial login details below:");
+    member.send("Just one last step to get into the IC CGCU server :)")
+    member.send("To complete your sign-up and verify your Discord Account, please fill in the form below");
     member.send("https://discord.docsoc.co.uk/"+ member.id);
-    member.send("This link will only work for your account! There is no point sharing it with other users");
-    log("Sent custom URL to user: " + member.displayName + " for verification");
 }
 
 /*
@@ -701,69 +653,15 @@ async function delete_room(meeting_room_name){
 
     var meeting_room = meeting_rooms[meeting_room_name];
     var voice_channel = get_channel(meeting_room["voice"]);
-    var text_channel = get_channel(meeting_room["chat"]);
     var role = await get_role(meeting_room["role"]);
 
     //Delete role
     await role.delete().catch(log);
-    //Fetch all messages and print to log
-    email_body  = "<h1>" + meeting_room_name + " chat log - DoCSoc Discord</h1>";
-    email_body += "<p><i> Please note this email does not necessarily represent the views of Imperial College London, the Department of Computing at Imperial College London or the Department of Computing Society or it's committee </i></p>";
-    email_body += "<p>Meeting : " + voice_channel.createdAt  + " - " + new Date(Date.now()).toLocaleString() + "</p>";
-    email_body += "<h3>Meeting Chat Log for " + meeting_room_name + "</h3>";
-    email_body += "<div style=\"background-color : black; color: white; padding: 10px;\">"
-    //Messages
-    msgs = ""
-    await text_channel.messages.fetch().then(messages => (messages.forEach(message=>{
-        //Current message
-        msg = "";
-        var name;
-        var author = get_member(message.author.id)
-        if(author.nickname == null){
-            name = "(Unverified)" + author.user.username;
-        }else{
-            name = author.nickname;
-        }
-        msg += name;
-        msg += ":"; 
-        msg += message.content;
-        message.attachments.forEach(attachment=>{
-            msg += "{Attachment URL}\n" + "<a href=\""+attachment.attachment+ "\">" +attachment.name + "</a>\n{/Attachment URL}\n";
-        });
-        //Added in reverse because message fetching is in reverse
-        msgs = "<p>" + msg + "</p>" + msgs;
-    })));
-    email_body += msgs;
 
-    var mailOptions = {
-        from: email.user,
-        to: "",
-        subject: "Discord Meeting Room: " + meeting_room_name + " - " + voice_channel.createdAt,
-        html: email_body
-    };
-    
-    meeting_room.members.forEach((member_id)=>{
-        get_shortcode(member_id).then((shortcodes)=>{
-            if(shortcodes.length > 0){
-                mailOptions.to = shortcodes[0] + "@ic.ac.uk";
-                email_transporter.sendMail(mailOptions, function(error, info){
-                    if (error) {
-                      log("Email error");
-                      log(error);
-                    } else {
-                      log('Email sent: ' + info.response);
-                      log("Sent to: "+ mailOptions.to); 
-                    }
-                });
-            }
-        })
-    })
     //Delete channels
     voice_channel.setName("DELETED");
-    text_channel.setName("DELETED");
     await voice_channel.delete().catch(log);
-    await text_channel.delete().catch(log);
-    
+
     log("Deleted meeting room with name: " + meeting_room_name + " due to timeout");
     get_member(meeting_room["owner_id"]).send("MEETING ENDING:\nYour meeting room "  + meeting_room_name + " has expired due to " + server.MEETING_TIMEOUT_TIME + " seconds of inactivity in the voice chat");
     
