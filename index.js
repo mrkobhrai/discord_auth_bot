@@ -113,7 +113,6 @@ var configured = false;
 bot.on('ready', () => {
     log("Attempting to run bot!");
     configure().then(function(){
-        // year_up();
         log("Bot running!");
         print_commands();
         // setTimeout(function(){notify_unverified_users()}, 2000);
@@ -427,14 +426,14 @@ function on_queue(snapshot, prevChildKey){
                     }else{
                         log("Unidentified year :" + year + " when trying to add member" + db_user.shortcode);
                     }
-                    log("Member: signed up successfully with username: " + member.user.username + " and id: " + member.user.id +" and course group: "+course+" and year: "+ year +"!");
+                    log("Member signed up successfully with username: " + member.user.username + " and id: " + member.user.id +" and course group: "+course+" and year: "+ year +"!");
                     var userid = member.toJSON().userID.toString();
                     verified_users.child(shortcode).set({"username": member.user.username,"disc_id" : userid, "course": course, "year": year});
                     member.send("Well done! You've been verified as a member!");
                     member.send("You are now free to explore the server and join in with DoCSoc Events!");
                     member.send("Use the '!help' command in any channel to get a list of available commands");
                 }else{
-                    log("Member: signed in successfully. \n However this shortcode is already associated with discord id: "+ fetched_snapshot.val().disc_id + "\n so can't be associated with discord id: " + snapshot.val().id);
+                    log("Member signed in successfully. \n However this shortcode is already associated with discord id: "+ fetched_snapshot.val().disc_id + "\n so can't be associated with discord id: " + snapshot.val().id);
                     member.send("This shortcode is already registered to a Discord User!");
                     member.send('If you believe this is an error, please contact an Admin');
                 }
