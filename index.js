@@ -538,7 +538,7 @@ async function sync_meetings(){
 function send_user_auth_url(member){
     member.send("Just one last step to get into the IC CGCU server :)")
     member.send("To complete your sign-up and verify your Discord Account, please fill in the form below");
-    member.send("https://cgcu-discord-auth.firebaseapp.com/"+ member.id);
+    member.send("https://cgcu-discord-auth.web.app/"+ member.id);
     member.send("Please note the URL will only be relevant to you");
     log("Send authentication URL to member:" + member.id);
 }
