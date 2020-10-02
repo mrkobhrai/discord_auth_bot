@@ -11,11 +11,7 @@ const server = require('./disc_config.json')
  */
 const dotenv = require('dotenv');
 dotenv.config();
-const email = {
-    "service": process.env.EMAILSERVICE,
-    "user": process.env.EMAILUSER,
-    "pass": process.env.EMAILPASS
-}
+
 const auth = {
     "token": process.env.DISCORDTOKEN
 }
@@ -230,8 +226,7 @@ bot.on('guildMemberAdd', member => {
 * If a room countdown has begun, then someone joins the voice chat, it resets the countdown
 */
 bot.on('voiceStateUpdate', function(oldState, newState){
-    //Check when voice channel is left (setTimeout()) function
-    
+
     //Check for channel change 
     if(oldState.channel == newState.channel){
         return;
@@ -240,7 +235,6 @@ bot.on('voiceStateUpdate', function(oldState, newState){
     //If a voice channel is left
     if(oldState.channel != null){
         if(Object.keys(meeting_rooms).includes(oldState.channel.name)){
-
             var name = oldState.channel.name;
             if(oldState.channel.members.size == 0){
                 var meeting_room = meeting_rooms[name];
@@ -289,16 +283,15 @@ bot.on('voiceStateUpdate', function(oldState, newState){
         var has_name = false;
         var meeting_room_name;
         for(var i = 1; !has_name; i++){
-            if(!Object.keys(meeting_rooms).includes("meeting_room_" + i) || meeting_rooms["meeting_room_" + i] == false){
+            if(!Object.keys(meeting_rooms).includes("game_room_" + i) || meeting_rooms["game_room_" + i] == false){
                 has_name = true;
-                meeting_room_name ="meeting-room-" + i;
+                meeting_room_name ="game_room_" + i;
                 meeting_rooms[meeting_room_name] =  true;
             }
         }
 
         var role;
         var voice_channel;
-        var text_channel;
         role = await guild.roles.create({
             data: {
                 name : meeting_room_name
@@ -310,10 +303,10 @@ bot.on('voiceStateUpdate', function(oldState, newState){
             type : 'voice', 
             parent : MEETING_CATEGORY,
             permissionOverwrites: [
-                {
-                    id: server.EVERYONE_ROLE_SAFE,
-                    deny: ['VIEW_CHANNEL']
-                },
+                // {
+                //     id: server.EVERYONE_ROLE_SAFE,
+                //     deny: ['VIEW_CHANNEL']
+                // },
                 {
                     id: role.id,
                     allow: ['VIEW_CHANNEL']
@@ -321,24 +314,6 @@ bot.on('voiceStateUpdate', function(oldState, newState){
             ]
         }).then((voice_channel)=>voice_channel).catch(log);
 
-        //Create text channel
-        text_channel = await guild.channels.create(meeting_room_name, { 
-            type : 'text', 
-            parent : MEETING_CATEGORY,
-            permissionOverwrites: [
-                {
-                    id: server.EVERYONE_ROLE_SAFE,
-                    deny: ['VIEW_CHANNEL']
-                },
-                {
-                    id: role.id,
-                    allow: ['VIEW_CHANNEL']
-                }
-            ]
-        }).then((text_channel)=>text_channel).catch(log);
-        text_channel.send("Meeting Channel");
-        text_channel.send("_A copy of this chat will be sent to each member once the meeting ends_");
-        text_channel.send("_The meeting will end after "+server.MEETING_TIMEOUT_TIME+" seconds of inactivity in the voice channel_");
         get_member(message.author.id).roles.add(role);
 
         message.mentions.users.forEach((member)=>{
@@ -353,7 +328,6 @@ bot.on('voiceStateUpdate', function(oldState, newState){
         //Create dictionary object
         var meeting_object = {
         "voice": voice_channel.id,
-        "chat" : text_channel.id ,
         "members" : member_ids,
         "owner_id" : message.author.id,
         "owner_shortcode" : author_shortcode,
@@ -362,7 +336,6 @@ bot.on('voiceStateUpdate', function(oldState, newState){
         //Log meeting creation
         log("Created meeting with attributes:\n" +  
         "voice: " + voice_channel.id + "\n" +
-        "chat: " + text_channel.id  + "\n" +
         "members: " + member_ids  + "\n" +
         "owner_id: " + message.author.id  + "\n" + 
         "owner_shortcode: " + author_shortcode  + "\n" +
@@ -395,12 +368,7 @@ bot.on('voiceStateUpdate', function(oldState, newState){
  * Database event listener. Interestingly, listener takes all backlog from when the bot was offline
  * Takes queued authentication and attempts to verify user members associated with each account
  */
-queue_ref.on("child_added", async function(snapshot,prevChildKey){
-    if(!configured){
-        await configure()
-    }
-    on_queue(snapshot,prevChildKey)
-});
+
 
 function on_queue(snapshot, prevChildKey){
     if(!configured){
@@ -418,7 +386,6 @@ function on_queue(snapshot, prevChildKey){
         var year = db_user.year;
         verified_users.child(shortcode).once('value', async function(fetched_snapshot){
             var alternate_shortcode = await get_shortcode(db_user.id).then(async function(alternate_shortcode){
-                console.log(alternate_shortcode[0] || shortcode);
                 if((alternate_shortcode[0] || shortcode) != shortcode){
                     member.send("IMPORTANT:You're already verified under "+alternate_shortcode[0]+"! Someone just tried to reverify this account! \n\nDid you send someone your authentication link or try and reuse it yourself! This account is already registered to a shortcode. If you wish to update any information e.g. course or year, please contact an admin");
                     log("Member already verified with discord id " + member.id + " and member with shortcode: " + shortcode + " attempted to reverify this account. This is not allowed!");
@@ -442,7 +409,6 @@ function on_queue(snapshot, prevChildKey){
                     }else{
                         log("Unidentified year :" + year + " when trying to add member" + db_user.shortcode);
                     }
-
                     log("Member: signed up successfully with username: " + member.user.username + " and id: " + member.user.id +" and course group: "+course+" and year: "+ year +"!");
                     var userid = member.toJSON().userID.toString();
                     verified_users.child(shortcode).set({"username": member.user.username,"disc_id" : userid, "course": course, "year": year});
@@ -454,7 +420,6 @@ function on_queue(snapshot, prevChildKey){
                     member.send("This shortcode is already registered to a Discord User!");
                     member.send('If you believe this is an error, please contact an Admin');
                 }
-                queue_ref.child(snapshot.key).remove();
             })
         })
     }
@@ -508,7 +473,7 @@ function get_member(id){
  * Prints the server configuration
  */
 function print_server_config(){
-    log("Server Config:\n-> SERVER: " + guild.toString() + "\n-> LOG CHANNEL: " + log_channel.name + "\n-> Meeting Timeout Time(s):" + server.MEETING_TIMEOUT_TIME);    
+    log("Server Config:\n-> SERVER: " + guild + "\n-> LOG CHANNEL: " + log_channel.name + "\n-> Meeting Timeout Time(s):" + server.MEETING_TIMEOUT_TIME);    
 }
 
 /*
@@ -617,18 +582,6 @@ async function configure(){
         //Errors will be sent to server
         console.log("Fetching committee role");
         COMMITTEE_ROLE = await get_role(server.COMMITTEE_ROLE_SAFE).then((role)=>role).catch(log);
-
-        //Create email transporter object
-        email_transporter = nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 465,
-            secure: true, 
-            auth: {
-                user: email.user,
-                pass: email.pass
-            }
-        });
-
     } catch(error){
         log("FATAL!!!");
         log("CONFIGURATION FAILED WITH ERROR:");
@@ -637,7 +590,10 @@ async function configure(){
         configured = true;
         log("-----------BOT BEGINS-----------");
         log("Bot Configured successfully!");
-        print_server_config();        
+        print_server_config();   
+        queue_ref.on("child_added", async function(snapshot,prevChildKey){
+            on_queue(snapshot,prevChildKey);
+        });     
     }
 }
 
