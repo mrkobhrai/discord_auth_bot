@@ -166,6 +166,16 @@ bot.on('message', message => {
 });
 
 /*
+ * Check for command '!verify' which lists all commands
+ */
+bot.on('message', message => {
+    if(message.content === '!verify' && message.member != null){
+        member.send("Just one last step to get into the IC CGCU server :)\n"+"To complete your sign-up and verify your Discord Account, please fill in the form below" + "https://cgcu-discord-auth.web.app/"+ member.id + "Please note the URL will only be relevant to you");
+        log("Sent authentication URL to member:" + member.id);
+    }
+});
+
+/*
  * Check for command '!logs' which prints all logs in the current bot session
  */
 bot.on('message', message => {
@@ -536,11 +546,8 @@ async function sync_meetings(){
  * Given a member object, sends the member their custom auth url
  */
 function send_user_auth_url(member){
-    member.send("Just one last step to get into the IC CGCU server :)")
-    member.send("To complete your sign-up and verify your Discord Account, please fill in the form below");
-    member.send("https://cgcu-discord-auth.web.app/"+ member.id);
-    member.send("Please note the URL will only be relevant to you");
-    log("Send authentication URL to member:" + member.id);
+    member.send("Just one last step to get into the IC CGCU server :)\n"+"To complete your sign-up and verify your Discord Account, please fill in the form below" + "https://cgcu-discord-auth.web.app/"+ member.id + "Please note the URL will only be relevant to you");
+    log("Sent authentication URL to member:" + member.id);
 }
 
 /*
@@ -639,20 +646,20 @@ async function delete_room(meeting_room_name){
 
 
 function notify_unverified_users(){
-    var notifications = 0;
-    if(configured){
-        log("Beginning: Notifiying Unverified Users");
-        guild.members.cache.forEach(guildMember => {
-            if(!guildMember.roles.cache.find( role => role.id === server.roles.Verified)){
-                send_user_auth_url(guildMember);
-                notifications++;
-            }
-        });
-        log(notifications + " users notified!");
-        log("Ending: Notifiying Unverified Users");
-    }else{
-        log("Can't clear backlog, configuration not set!");
-    }
+    // var notifications = 0;
+    // if(configured){
+    //     log("Beginning: Notifiying Unverified Users");
+    //     guild.members.cache.forEach(guildMember => {
+    //         if(!guildMember.roles.cache.find( role => role.id === server.roles.Verified)){
+    //             send_user_auth_url(guildMember);
+    //             notifications++;
+    //         }
+    //     });
+    //     log(notifications + " users notified!");
+    //     log("Ending: Notifiying Unverified Users");
+    //}else{
+    //     log("Can't clear backlog, configuration not set!");
+    //}
 }
 /**
  * Augment Functions
