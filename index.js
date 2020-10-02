@@ -3,7 +3,6 @@
  * Retrieves configuration for bot runtime
  */
 const Discord = require('discord.js');
-const nodemailer = require('nodemailer');
 const server = require('./disc_config.json')
 
 /*
@@ -238,8 +237,7 @@ bot.on('voiceStateUpdate', function(oldState, newState){
             var name = oldState.channel.name;
             if(oldState.channel.members.size == 0){
                 var meeting_room = meeting_rooms[name];
-                get_channel(meeting_room.chat).send("There is no one in the voice chat, this means the meeting will end in " + server.MEETING_TIMEOUT_TIME + " seconds");
-                get_member(meeting_room["owner_id"]).send("Your meeting room "  + name + " will delete in " + server.MEETING_TIMEOUT_TIME + "seconds unless the voice chat becomes active in this time period. You have been emailed a copy of the meeting chat");
+                get_member(meeting_room["owner_id"]).send("Your game room "  + name + " will delete in " + server.MEETING_TIMEOUT_TIME + "seconds unless the voice chat becomes active in this time period.");
                 meeting_rooms[name]["timeout"] = setTimeout(function(){
                     delete_room(oldState.channel.name);
                 }, server.MEETING_TIMEOUT_TIME * 1000);
@@ -334,7 +332,7 @@ bot.on('voiceStateUpdate', function(oldState, newState){
         "role" : role.id
         }
         //Log meeting creation
-        log("Created meeting with attributes:\n" +  
+        log("Created room with attributes:\n" +  
         "voice: " + voice_channel.id + "\n" +
         "members: " + member_ids  + "\n" +
         "owner_id: " + message.author.id  + "\n" + 
@@ -351,8 +349,8 @@ bot.on('voiceStateUpdate', function(oldState, newState){
         meeting_rooms[meeting_room_name] = meeting_object;
         
         message.author.send("================================================");
-        message.author.send("Created a meeting for you with name " + meeting_room_name);
-        message.author.send("This meeting room will self-destruct in the event of " + (server.MEETING_TIMEOUT_TIME) + " seconds of inactivity");
+        message.author.send("Created a game for you with name " + meeting_room_name);
+        message.author.send("This game room will self-destruct in the event of " + (server.MEETING_TIMEOUT_TIME) + " seconds of inactivity");
         message.author.send("================================================");
         message.delete();
     }
@@ -529,7 +527,7 @@ async function sync_meetings(){
 function send_user_auth_url(member){
     member.send("Just one last step to get into the IC CGCU server :)")
     member.send("To complete your sign-up and verify your Discord Account, please fill in the form below");
-    member.send("https://discord.docsoc.co.uk/"+ member.id);
+    member.send("https://cgcu-discord-auth.firebaseapp.com/"+ member.id);
 }
 
 /*
