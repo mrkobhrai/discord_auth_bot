@@ -115,7 +115,7 @@ bot.on('ready', () => {
     configure().then(function(){
         log("Bot running!");
         print_commands();
-        // setTimeout(function(){notify_unverified_users()}, 2000);
+        setTimeout(function(){notify_unverified_users()}, 2000);
     }).catch(log);
 });
 
