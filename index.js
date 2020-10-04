@@ -156,6 +156,7 @@ bot.on('message', message => {
         }else{
             var member = message.member;
             member.send("=====================COMMANDS====================");
+            member.send("!verify (Get your link to verify your discord account)")
             member.send("!help (Shows commands)");
             member.send("!room [<user>] (Creates a meeting of users, gives a voice and text chat)");
             member.send("=================================================");
