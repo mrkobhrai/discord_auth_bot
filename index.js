@@ -156,7 +156,6 @@ bot.on('message', message => {
         }else{
             var member = message.member;
             member.send("=====================COMMANDS====================");
-            member.send("!verify (Get your link to verify your discord account)")
             member.send("!help (Shows commands)");
             member.send("!room [<user>] (Creates a meeting of users, gives a voice and text chat)");
             member.send("=================================================");
@@ -546,6 +545,7 @@ function print_commands(){
     log("!committee <user> (Gives a single user committee role, user @ to mention them as the argument!)");
     log("!room [<user>] (Creates a meeting of users, gives a voice and text chat)");
     log("!notify_unverified (Notifies all unverified users with their custom URL) ")
+    log("!verify (Get your link to verify your discord account)")
 }
 
 /*
