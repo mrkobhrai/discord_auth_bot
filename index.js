@@ -620,7 +620,6 @@ async function sync_meetings(){
  * Given a member object, sends the member their custom auth url
  */
 function send_user_auth_url(member){
-    return;
     try{
         var message = "Just one last step to get into the IC CGCU server :)\n"+"To complete your sign-up and verify your Discord Account, please fill in the form below:\n" + "https://cgcu-discord-auth.web.app/"+ member.id + "\nPlease note the URL will only be relevant to you";
         sendMessage(member, message);
