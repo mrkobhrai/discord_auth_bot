@@ -146,6 +146,22 @@ bot.on('message', message => {
     }
 });
 
+
+/*
+ * Unverify command to remove shortcodes registered to this user account
+ */
+bot.on('message',async function(message){
+    if(message.content === '!unverify' && message.member != null){
+        message.member.send("This account has been unverified and will now be reset");
+        var shortcode = await get_shortcode(message.member.id);
+        if(shortcode.length <= 0){
+            return;
+        }
+        message.member.roles.set([]);
+        log("Unverifying user currently registered under shortcode:" + shortcode[0]);
+        verified_users.child(shortcode[0]).remove();
+    }
+})
 /*
  * Check for command '!help' which lists all commands
  */
@@ -231,7 +247,7 @@ bot.on('message', message => {
  * When a member is added, log them joining and send them their custom auth url
  */
 bot.on('guildMemberAdd', member => {
-    member.send("Welcome to the DoCSoc Discord Server!");
+    member.send("Welcome to the CGCU Discord Server!");
     log("New Member Joined:" + member.displayName);
     send_user_auth_url(member);
 });
@@ -468,7 +484,7 @@ function on_queue(snapshot, prevChildKey){
                     var userid = member.toJSON().userID.toString();
                     verified_users.child(shortcode).set({"username": member.user.username,"disc_id" : userid, "course": course, "year": year});
                     member.send("Well done! You've been verified as a member!");
-                    member.send("You are now free to explore the server and join in with DoCSoc Events!");
+                    member.send("You are now free to explore the server and join in with CGCU Events!");
                     member.send("Use the '!help' command in any channel to get a list of available commands");
                 }else{
                     log("Member signed in successfully. \n However this shortcode is already associated with discord id: "+ fetched_snapshot.val().disc_id + "\n so can't be associated with discord id: " + snapshot.val().id);
@@ -585,6 +601,7 @@ async function sync_meetings(){
  * Given a member object, sends the member their custom auth url
  */
 function send_user_auth_url(member){
+    return;
     try{
         var message = "Just one last step to get into the IC CGCU server :)\n"+"To complete your sign-up and verify your Discord Account, please fill in the form below:\n" + "https://cgcu-discord-auth.web.app/"+ member.id + "\nPlease note the URL will only be relevant to you";
         sendMessage(member, message);
@@ -699,7 +716,7 @@ async function delete_room(meeting_room_name){
  */
 function year_up(){
     guild.members.cache.forEach((member)=>{
-            member.send("New university year, new you :) For security reasons we ask that you reauthenticate your DoCSoc membership and update your details for the upcoming year!");
+            member.send("New university year, new you :) For security reasons we ask that you reauthenticate your CGCU membership and update your details for the upcoming year!");
             member.send("You will be unable to use the server normally until you update your details");
             if(!member.user.bot){
                 member.roles.set([]);
