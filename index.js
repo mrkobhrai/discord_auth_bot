@@ -151,15 +151,32 @@ bot.on('message', message => {
  * Unverify command to remove shortcodes registered to this user account
  */
 bot.on('message',async function(message){
-    if(message.content === '!unverify' && message.member != null){
-        message.member.send("This account has been unverified and will now be reset");
-        var shortcode = await get_shortcode(message.member.id);
-        if(shortcode.length <= 0){
-            return;
+    if(message.content.startsWith('!unverify') && message.member != null){
+        if(message.member.hasPermission("ADMINISTRATOR")){
+            console.log("hi");
+            message.mentions.users.forEach(async function(user){
+                var member = get_member(user.id);
+                member.send("This account has been unverified and will now be reset");
+            var shortcode = await get_shortcode(member.id);
+            if(shortcode.length <= 0){
+                return;
+            }
+            member.roles.set([]);
+            log("Unverifying user currently registered under shortcode:" + shortcode[0]);
+            verified_users.child(shortcode[0]).remove();
+            
+            })
+            message.delete();
+        }else{
+            message.member.send("This account has been unverified and will now be reset");
+            var shortcode = await get_shortcode(message.member.id);
+            if(shortcode.length <= 0){
+                return;
+            }
+            message.member.roles.set([]);
+            log("Unverifying user currently registered under shortcode:" + shortcode[0]);
+            verified_users.child(shortcode[0]).remove();
         }
-        message.member.roles.set([]);
-        log("Unverifying user currently registered under shortcode:" + shortcode[0]);
-        verified_users.child(shortcode[0]).remove();
     }
 })
 /*
@@ -173,7 +190,8 @@ bot.on('message', message => {
             var member = message.member;
             member.send("=====================COMMANDS====================");
             member.send("!help (Shows commands)");
-            member.send("!room [<user>] (Creates a meeting of users, gives a voice and text chat)");
+            member.send("!room [<user>] (Creates a meeting of users, gives a voice and text chat, you can also use this to invite users to your existing room)");
+            member.send("!unverify (Resets your discord account and clears the user registered under it")
             member.send("=================================================");
         }
         message.delete();
@@ -562,6 +580,7 @@ function print_commands(){
     log("!room [<user>] (Creates a meeting of users, gives a voice and text chat)");
     log("!notify_unverified (Notifies all unverified users with their custom URL) ")
     log("!verify (Get your link to verify your discord account)")
+    log("!unverify [<user>] (Unverifies a set of users by mentions)")
 }
 
 /*
@@ -601,6 +620,7 @@ async function sync_meetings(){
  * Given a member object, sends the member their custom auth url
  */
 function send_user_auth_url(member){
+    return;
     try{
         var message = "Just one last step to get into the IC CGCU server :)\n"+"To complete your sign-up and verify your Discord Account, please fill in the form below:\n" + "https://cgcu-discord-auth.web.app/"+ member.id + "\nPlease note the URL will only be relevant to you";
         sendMessage(member, message);
