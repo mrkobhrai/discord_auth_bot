@@ -145,7 +145,6 @@ bot.on('message', message => {
 bot.on('message',async function(message){
     if(message.content.startsWith('!unverify') && message.member != null){
         if(message.member.hasPermission("ADMINISTRATOR")){
-            console.log("hi");
             message.mentions.users.forEach(async function(user){
                 var member = get_member(user.id);
                 member.send("This account has been unverified and will now be reset");
@@ -424,13 +423,13 @@ function send_user_auth_url(member){
         sendMessage(member, message);
         log("Sent authentication URL to member:" + member.id);
     }catch(ex){
-        console.log(ex);
+        log(ex);
     }
 }
 
 
 function sendMessage(member, message){
-    member.send(message).catch(console.log);
+    member.send(message).catch(log);
 }
 /*
 * Fetch user shortcode from userid
