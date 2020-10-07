@@ -257,6 +257,7 @@ bot.on('message', message => {
  */
 bot.on('guildMemberAdd', member => {
     member.send("Welcome to the RCSU Discord Server!");
+    welcome_channel.send("Welcome to the RCSU Server, <@"+member.id+">, please check your DM's to verify your account")
     log("New Member Joined:" + member.displayName);
     send_user_auth_url(member);
 });
