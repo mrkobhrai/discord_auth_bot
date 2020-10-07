@@ -262,7 +262,6 @@ bot.on('guildMemberAdd', member => {
 });
 
 function notify_unverified_users(){
-    return;
     var notifications = 0;
     if(configured){
         log("Beginning: Notifiying Unverified Users");
